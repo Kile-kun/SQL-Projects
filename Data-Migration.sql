@@ -1,4 +1,4 @@
-/*CREATE DATABASE USING INLINE METHOD BECAUSE OF IT AUTOMATION ADVANTAGE*/
+/*CREATE DATABASE USING INLINE METHOD BECAUSE OF IT'S DATA UPLOAD AUTOMATION ADVANTAGE*/
 DROP DATABASE IF EXISTS dm_db;
 CREATE DATABASE dm_db;
 USE dm_db;
@@ -28,3 +28,70 @@ ENCLOSED BY '"' LINES
 TERMINATED BY '\n'
 IGNORE 1 ROWS;
 
+/* CHECK DATA FOR CONFIRMATION*/
+USE dm_db;
+SELECT * FROM customer;
+
+/*EXPLORATORY DATA ANALYSIS*/
+
+/*Data Distribution*/
+
+/*Geography Distribution of Customers*/
+USE dm_db;
+SELECT Geography, COUNT(Geography) AS NoOfCustomers
+FROM customer
+GROUP BY Geography
+ORDER BY NoOfCustomers;
+
+/*Gender Distribution of Customers*/
+USE dm_db;
+SELECT Gender, COUNT(Gender) AS NoOfCustomers
+FROM customer
+GROUP BY Gender
+ORDER BY NoOfCustomers;
+
+/*Age Distribution of Customers*/
+USE dm_db;
+SELECT Age, COUNT(Age) AS NoOfCustomers
+FROM customer
+GROUP BY Age
+ORDER BY Age;
+
+/*Group Age of Customers Into Clusters
+USE dm_db;
+SELECT Age, COUNT(Age) AS NoOfCustomers
+FROM customer
+GROUP BY Age
+ORDER BY Age;*/
+
+/*Customers Year of Patronage Distribution*/
+USE dm_db;
+SELECT Tenure, COUNT(Tenure) AS NoOfCustomers
+FROM customer
+GROUP BY Tenure
+ORDER BY Tenure;
+
+/*Product Purchase Distribution*/
+USE dm_db;
+SELECT NumOfProducts, COUNT(NumOfProducts) AS NoOfCustomers
+FROM customer
+GROUP BY NumOfProducts
+ORDER BY NoOfCustomers;
+
+/*Customers Credit Card Ownership Distribution*/
+SELECT CASE HasCrCard 
+           WHEN '1' THEN 'Yes' 
+           ELSE 'No' 
+       END AS HasCrCard,
+		COUNT(HasCrCard) AS NoOfCustomers
+FROM customer
+GROUP BY HasCrCard;
+
+/*Customers Patronage Activeness Distribution*/
+SELECT CASE IsActiveMember
+           WHEN '1' THEN 'Active' 
+           ELSE 'Inactive' 
+       END AS IsActiveMember,
+		COUNT(IsActiveMember) AS NoOfCustomers
+FROM customer
+GROUP BY IsActiveMember;
