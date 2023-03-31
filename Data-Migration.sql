@@ -4,25 +4,49 @@ CREATE DATABASE dm_db;
 USE dm_db;
 DROP TABLE IF EXISTS customer;
 CREATE TABLE customer (
-			RowNumber		INT,
-			CustomerId		INT,
-			Surname			VARCHAR(256),
-			CreditScore		INT,
-			Geography		VARCHAR(256),
-			Gender			ENUM ('Male', 'Female'),
-			Age				INT,
-			Tenure			INT,
-			Balance			DECIMAL(10,2),
-			NumOfProducts	INT,
-			HasCrCard		ENUM ('1', '0'),
-			IsActiveMember	ENUM ('1', '0'),
-			EstimatedSalary	DECIMAL(10,2),
-	PRIMARY KEY (customerId)
+    CustomerId INT,
+    Surname VARCHAR(256),
+    Gender ENUM('Male', 'Female'),
+    Age INT,
+    IsActiveMember ENUM('1', '0'),
+    Tenure INT,
+    HasCrCard ENUM('1', '0'),
+    CreditScore INT,
+    PRIMARY KEY (customerId)
+);
+CREATE TABLE Geography (
+    GeoId VARCHAR(256),
+    Country VARCHAR(256),
+    PRIMARY KEY (GeoId)
+);
+CREATE TABLE Transaction (
+    TransactionId INT,
+    CustomerId INT,
+    GeoId VARCHAR(256),
+    NumOfProducts INT,
+    Balance DECIMAL(10 , 2 ),
+    FOREIGN KEY (CustomerId)
+        REFERENCES Customer (CustomerId) ON DELETE CASCADE,
+    FOREIGN KEY (GeoId)
+        REFERENCES Geography (GeoId) ON DELETE CASCADE,
+    PRIMARY KEY (TransactionId)
 );
 USE dm_db;
 SET GLOBAL LOCAL_INFILE=true;
-LOAD DATA LOCAL INFILE 'C:/Users/babat/OneDrive/Documents/Tech1M DA Bootcamp/Project/Data Migration Project/DM_Dataset_CSV.csv'
+LOAD DATA LOCAL INFILE 'C:/Users/babat/OneDrive/Documents/Tech1M DA Bootcamp/Project/Data Migration Project/Customer.csv'
 INTO TABLE customer
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"' LINES
+TERMINATED BY '\n'
+IGNORE 1 ROWS;
+LOAD DATA LOCAL INFILE 'C:/Users/babat/OneDrive/Documents/Tech1M DA Bootcamp/Project/Data Migration Project/Geography.csv'
+INTO TABLE geography
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"' LINES
+TERMINATED BY '\n'
+IGNORE 1 ROWS;
+LOAD DATA LOCAL INFILE 'C:/Users/babat/OneDrive/Documents/Tech1M DA Bootcamp/Project/Data Migration Project/Transaction.csv'
+INTO TABLE transaction
 FIELDS TERMINATED BY ','
 ENCLOSED BY '"' LINES
 TERMINATED BY '\n'
@@ -34,6 +58,14 @@ SELECT
     *
 FROM
     customer;
+SELECT 
+    *
+FROM
+    transaction;
+SELECT 
+    *
+FROM
+    geography;
 
 /*EXPLORATORY DATA ANALYSIS*/
 
@@ -42,10 +74,16 @@ FROM
 /*Geography Distribution of Customers*/
 USE dm_db;
 SELECT 
-    Geography, COUNT(Geography) AS NoOfCustomers
+    g.Country, COUNT(g.Country) AS NoOfCustomers
 FROM
-    customer
-GROUP BY Geography
+    geography g
+INNER JOIN
+	transaction t
+    ON g.GeoId = t.GeoId
+INNER JOIN 
+	customer c
+    ON t.CustomerId = c.CustomerId
+GROUP BY g.Country
 ORDER BY NoOfCustomers;
 
 /*Gender Distribution of Customers*/
@@ -66,12 +104,21 @@ FROM
 GROUP BY Age
 ORDER BY Age;
 
-/*Group Age of Customers Into Clusters
-USE dm_db;
-SELECT Age, COUNT(Age) AS NoOfCustomers
+/*Group Age of Customers Into Clusters*/
+SELECT
+CASE
+  WHEN Age BETWEEN 10 AND 19 THEN 'Teenages'
+  WHEN Age BETWEEN 20 AND 29 THEN '20s'
+  WHEN Age BETWEEN 30 AND 39 THEN '30s'
+  WHEN Age BETWEEN 40 AND 49 THEN '40s'
+  WHEN Age BETWEEN 50 AND 59 THEN '50s'
+  WHEN Age BETWEEN 60 AND 69 THEN '60s'
+  ELSE '70+'
+END AS AgeGrp,
+COUNT(*) NoOfCust
 FROM customer
-GROUP BY Age
-ORDER BY Age;*/
+GROUP BY AgeGrp
+ORDER BY AgeGrp * 1, AgeGrp DESC;
 
 /*Customers Year of Patronage Distribution*/
 USE dm_db;
@@ -85,9 +132,12 @@ ORDER BY Tenure;
 /*Product Purchase Distribution*/
 USE dm_db;
 SELECT 
-    NumOfProducts, COUNT(NumOfProducts) AS NoOfCustomers
+    t.NumOfProducts, COUNT(t.NumOfProducts) AS NoOfCustomers
 FROM
-    customer
+transaction t
+INNER JOIN 
+    customer c
+    ON t.CustomerId = c.CustomerId
 GROUP BY NumOfProducts
 ORDER BY NoOfCustomers;
 
@@ -110,3 +160,30 @@ SELECT CASE IsActiveMember
 		COUNT(IsActiveMember) AS NoOfCustomers
 FROM customer
 GROUP BY IsActiveMember;
+
+
+/*Credit Score Analysis*/
+
+/*Average Credit Score Per Country*/
+SELECT 
+    g.Country, AVG(c.CreditScore) AS AvgCrdScore
+FROM
+    geography g
+        INNER JOIN
+    transaction t ON g.GeoId = t.GeoId
+        INNER JOIN
+    customer c ON t.CustomerId = c.CustomerId
+GROUP BY g.Country
+ORDER BY AvgCrdScore;
+
+/*Average Credit Score Per Country Per Ages*/
+SELECT c.Age,
+AVG(CASE WHEN g.Country LIKE '%France%' THEN c.CreditScore ELSE NULL END) AS France,
+AVG(CASE WHEN g.Country LIKE '%Germany%' THEN c.CreditScore ELSE NULL END) AS Germany,
+AVG(CASE WHEN g.Country LIKE '%Spain%' THEN c.CreditScore ELSE NULL END) AS Spain,
+AVG(c.CreditScore) AS AvgCrdScore
+FROM customer c
+INNER JOIN transaction t ON c.CustomerId= t.CustomerId
+INNER JOIN geography g ON t.GeoId = g.GeoId
+GROUP BY c.Age
+ORDER BY c.Age;
