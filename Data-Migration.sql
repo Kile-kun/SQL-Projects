@@ -177,13 +177,70 @@ GROUP BY g.Country
 ORDER BY AvgCrdScore;
 
 /*Average Credit Score Per Country Per Ages*/
-SELECT c.Age,
-AVG(CASE WHEN g.Country LIKE '%France%' THEN c.CreditScore ELSE NULL END) AS France,
-AVG(CASE WHEN g.Country LIKE '%Germany%' THEN c.CreditScore ELSE NULL END) AS Germany,
-AVG(CASE WHEN g.Country LIKE '%Spain%' THEN c.CreditScore ELSE NULL END) AS Spain,
-AVG(c.CreditScore) AS AvgCrdScore
-FROM customer c
-INNER JOIN transaction t ON c.CustomerId= t.CustomerId
-INNER JOIN geography g ON t.GeoId = g.GeoId
+SELECT 
+    c.Age,
+    AVG(CASE
+        WHEN g.Country LIKE '%France%' THEN c.CreditScore
+        ELSE NULL
+    END) AS France,
+    AVG(CASE
+        WHEN g.Country LIKE '%Germany%' THEN c.CreditScore
+        ELSE NULL
+    END) AS Germany,
+    AVG(CASE
+        WHEN g.Country LIKE '%Spain%' THEN c.CreditScore
+        ELSE NULL
+    END) AS Spain,
+    AVG(c.CreditScore) AS AvgCrdScore
+FROM
+    customer c
+        INNER JOIN
+    transaction t ON c.CustomerId = t.CustomerId
+        INNER JOIN
+    geography g ON t.GeoId = g.GeoId
 GROUP BY c.Age
 ORDER BY c.Age;
+USE dm_db;
+
+/*Average Credit Score Per Gender*/
+SELECT 
+    c.Age,
+    AVG(CASE
+        WHEN c.gender = "Female" THEN c.CreditScore
+        ELSE NULL
+    END) AS Female,
+    AVG(CASE
+        WHEN c.gender = "Male" THEN c.CreditScore
+        ELSE NULL
+    END) AS Male,
+    AVG(c.CreditScore) AS AvgCrdScore
+FROM
+    customer c
+GROUP BY c.Age
+ORDER BY c.Age;
+
+/*Average Credit Score Per Customer Tenure and Actie Status*/
+SELECT c.Tenure, 
+AVG(CASE WHEN c.IsActiveMember LIKE '%0%' THEN c.CreditScore END) AS ActiveCustomer,
+AVG(CASE WHEN c.IsActiveMember LIKE '%1%' THEN c.CreditScore END) AS InActiveCustomer
+FROM customer c
+GROUP BY c.Tenure
+ORDER BY c.Tenure;
+
+/*Credit Score Dependence on Customer Balance*/
+SELECT (CASE 
+	WHEN c.CreditScore BETWEEN 299 AND 400 THEN "300s"
+    WHEN c.CreditScore BETWEEN 399 AND 500 THEN "400s"
+    WHEN c.CreditScore BETWEEN 499 AND 600 THEN "500s"
+    WHEN c.CreditScore BETWEEN 599 AND 700 THEN "600s"
+    WHEN c.CreditScore BETWEEN 699 AND 800 THEN "700s"
+    ELSE '800s' END) AS CrdScore,
+   ROUND(AVG(t.Balance),2) AS AvgBalance
+   FROM customer c
+INNER JOIN transaction t
+ON c.CustomerId = t.CustomerId
+GROUP BY CrdScore
+ORDER BY CrdScore;
+
+/*Product Sales Analysis*/
+/*Top Customers With Product Procurement*/
