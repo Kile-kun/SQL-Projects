@@ -219,7 +219,7 @@ FROM
 GROUP BY c.Age
 ORDER BY c.Age;
 
-/*Average Credit Score Per Customer Tenure and Actie Status*/
+/*Average Credit Score Per Customer Tenure and Active Status*/
 SELECT c.Tenure, 
 AVG(CASE WHEN c.IsActiveMember LIKE '%0%' THEN c.CreditScore END) AS ActiveCustomer,
 AVG(CASE WHEN c.IsActiveMember LIKE '%1%' THEN c.CreditScore END) AS InActiveCustomer
@@ -243,4 +243,68 @@ GROUP BY CrdScore
 ORDER BY CrdScore;
 
 /*Product Sales Analysis*/
+/*Total Product Sales Per Country*/
+SELECT g.Country, SUM(t.NumOfProducts) AS TotProdSales
+FROM geography g
+JOIN transaction t ON g.GeoId = t.GeoId
+GROUP BY g.Country
+ORDER BY g.Country;
+
+/*Product Sales Vs Age and Gender*/
+SELECT
+CASE
+  WHEN c.Age BETWEEN 10 AND 19 THEN 'Teenages'
+  WHEN c.Age BETWEEN 20 AND 29 THEN '20s'
+  WHEN c.Age BETWEEN 30 AND 39 THEN '30s'
+  WHEN c.Age BETWEEN 40 AND 49 THEN '40s'
+  WHEN c.Age BETWEEN 50 AND 59 THEN '50s'
+  WHEN c.Age BETWEEN 60 AND 69 THEN '60s'
+  ELSE '70+'
+END AS AgeGrp,
+SUM(t.NumofProducts) AS TotProdSales
+FROM customer c
+JOIN transaction t ON c.CustomerId = t.CustomerId
+GROUP BY AgeGrp
+ORDER BY AgeGrp * 1, AgeGrp DESC;
+
+/*Average Credit Score Per Customer Tenure and Active Status*/
+SELECT c.Gender, 
+SUM(CASE WHEN c.IsActiveMember LIKE '%0%' THEN t.NumOfProducts END) AS ActiveCustomer,
+SUM(CASE WHEN c.IsActiveMember LIKE '%1%' THEN t.NumOfProducts END) AS InActiveCustomer
+FROM customer c
+JOIN transaction t
+ON c.CustomerId = t.CustomerId
+GROUP BY c.Gender
+ORDER BY c.Gender;
+
 /*Top Customers With Product Procurement*/
+/*Top Product Sales Among Countries*/
+SELECT g.Country, SUM(t.NumOfProducts) AS TotProdSales
+FROM geography g 
+INNER JOIN transaction t
+ON g.GeoId = t.GeoId
+GROUP BY g.Country
+ORDER BY TotProdSales;
+
+/*Top Loyal Customers*/
+/*Customers whose has been transacting with the business for more than 3 years and have traded more than twice*/
+CREATE VIEW LoyCust AS
+SELECT c.Surname, c.Tenure, t.NumOfProducts, g.Country
+FROM customer c
+INNER JOIN transaction t ON c.CustomerId = t.CustomerId
+INNER JOIN geography g ON t.GeoId = g.GeoId
+WHERE c.Tenure > 3 AND t.NumOfProducts > 2;
+
+ALTER VIEW loycust (Surname, Tenure, NumOfProducts, Country)
+AS
+SELECT Surname, Tenure, NumOfProducts, Country 
+FROM customer c
+INNER JOIN transaction t ON c.CustomerId = t.CustomerId
+INNER JOIN geography g ON t.GeoId = g.GeoId
+WHERE c.Tenure > 3 AND t.NumOfProducts > 2
+ORDER BY NumOfProducts DESC;
+SELECT * FROM loycust;
+
+
+
+
